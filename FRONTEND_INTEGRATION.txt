@@ -1,0 +1,152 @@
+=================================================================
+  FRONTEND + BACKEND EK SAATH DEPLOY KARNE KA COMPLETE GUIDE
+=================================================================
+
+✅ SETUP COMPLETE! Ab ek hi Render web service me dono chal jayenge.
+
+-----------------------------------------------------------------
+STEP 1: FRONTEND BUILD KARO
+-----------------------------------------------------------------
+
+Apne frontend folder me jao aur build karo:
+
+# React/Vite:
+cd your-frontend-folder
+npm run build
+# Build folder banega: "dist" ya "build"
+
+# Next.js:
+cd your-frontend-folder
+npm run build
+npm run export  # ya next export
+# Build folder banega: "out"
+
+-----------------------------------------------------------------
+STEP 2: BUILD FOLDER KO DJANGO ME COPY KARO
+-----------------------------------------------------------------
+
+Is Django project me ek "frontend" folder banao aur build copy karo:
+
+mkdir frontend
+cp -r your-frontend-folder/build frontend/build
+# Ya agar Next.js hai:
+cp -r your-frontend-folder/out frontend/build
+
+Folder structure aisa hoga:
+insightstream/
+├── apps/
+├── core/
+├── frontend/
+│   └── build/
+│       ├── index.html
+│       ├── static/
+│       └── ...
+├── insightstream/
+└── manage.py
+
+-----------------------------------------------------------------
+STEP 3: GITHUB PE PUSH KARO
+-----------------------------------------------------------------
+
+git add .
+git commit -m "Add frontend build"
+git push origin main
+
+-----------------------------------------------------------------
+STEP 4: RENDER PE DEPLOY KARO
+-----------------------------------------------------------------
+
+Render automatically detect karega aur dono deploy ho jayenge!
+
+-----------------------------------------------------------------
+KAISE KAAM KAREGA?
+-----------------------------------------------------------------
+
+1. API calls: https://your-app.onrender.com/api/...
+2. Frontend: https://your-app.onrender.com/
+3. Admin: https://your-app.onrender.com/admin/
+
+Django automatically:
+- API endpoints serve karega /api/* pe
+- Frontend serve karega baaki sab routes pe
+- Static files (CSS, JS, images) serve karega
+
+-----------------------------------------------------------------
+FRONTEND ME API URL KAISE SET KAREIN?
+-----------------------------------------------------------------
+
+Frontend code me API base URL set karo:
+
+// React/Next.js
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://your-app.onrender.com/api'
+  : 'http://localhost:8000/api';
+
+// .env file me:
+VITE_API_URL=https://your-app.onrender.com/api
+# Ya Next.js me:
+NEXT_PUBLIC_API_URL=https://your-app.onrender.com/api
+
+-----------------------------------------------------------------
+ABHI KE LIYE (FRONTEND NAHI HAI TO)
+-----------------------------------------------------------------
+
+Abhi sirf backend deploy karo. Jab frontend ready ho:
+1. Build karo
+2. frontend/build me copy karo
+3. Git push karo
+4. Automatic deploy ho jayega!
+
+-----------------------------------------------------------------
+TESTING
+-----------------------------------------------------------------
+
+# Backend test:
+curl https://your-app.onrender.com/api/users/register/
+
+# Frontend test:
+Open browser: https://your-app.onrender.com/
+
+-----------------------------------------------------------------
+IMPORTANT NOTES
+-----------------------------------------------------------------
+
+✅ Ek hi web service - dono chal jayenge
+✅ Ek hi domain - frontend aur backend dono
+✅ No CORS issues - same domain hai
+✅ Easy deployment - ek push, dono deploy
+✅ Cost effective - ek service ka paisa
+
+-----------------------------------------------------------------
+RENDER ENVIRONMENT VARIABLES (SAME AS BEFORE)
+-----------------------------------------------------------------
+
+SECRET_KEY=<generate-karo>
+DEBUG=False
+ALLOWED_HOSTS=.onrender.com
+DATABASE_URL=<postgres-url>
+REDIS_URL=<redis-url>
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=<password>
+GEMINI_API_KEY_1=<key>
+GEMINI_API_KEY_2=<key>
+GEMINI_API_KEY_3=<key>
+YOUTUBE_API_KEY_1=<key>
+YOUTUBE_API_KEY_2=<key>
+YOUTUBE_API_KEY_3=<key>
+REPLICATE_API_TOKEN=<token>
+IMAGEKIT_PUBLIC_KEY=<key>
+IMAGEKIT_PRIVATE_KEY=<key>
+IMAGEKIT_URL_ENDPOINT=<endpoint>
+
+-----------------------------------------------------------------
+DONE! 🎉
+-----------------------------------------------------------------
+
+Ab bas:
+1. Frontend build karo
+2. frontend/build me copy karo
+3. Git push karo
+4. Render pe deploy ho jayega!
+
+Questions? Check DEPLOYMENT_HINDI.md
