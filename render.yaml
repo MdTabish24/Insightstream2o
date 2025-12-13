@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: insightstream-django
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn insightstream.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: insightstream-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DJANGO_SETTINGS_MODULE
+        value: insightstream.settings
+      - key: WEB_CONCURRENCY
+        value: 4
+
+databases:
+  - name: insightstream-db
+    databaseName: insightstream
+    user: insightstream
