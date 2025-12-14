@@ -105,8 +105,10 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [BASE_DIR / 'frontend/dist/assets'] if (BASE_DIR / 'frontend/dist/assets').exists() else []
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_DIRS = []
+if (BASE_DIR / 'frontend/dist').exists():
+    STATICFILES_DIRS.append(BASE_DIR / 'frontend/dist')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # Media files (for user uploads)
 MEDIA_URL = '/media/'
