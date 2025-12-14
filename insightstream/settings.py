@@ -61,7 +61,7 @@ ROOT_URLCONF = 'insightstream.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'frontend/build'] if (BASE_DIR / 'frontend/build').exists() else [],
+        'DIRS': [BASE_DIR / 'frontend/dist'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -105,7 +105,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [BASE_DIR / 'frontend/build'] if (BASE_DIR / 'frontend/build').exists() else []
+STATICFILES_DIRS = [BASE_DIR / 'frontend/dist/assets'] if (BASE_DIR / 'frontend/dist/assets').exists() else []
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files (for user uploads)

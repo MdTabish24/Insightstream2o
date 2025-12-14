@@ -32,6 +32,11 @@ db.sqlite3-journal
 /staticfiles
 /static
 
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
 # Environment variables
 .env
 .env.local

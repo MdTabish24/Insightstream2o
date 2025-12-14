@@ -38,8 +38,7 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
-# Serve frontend - catch all other routes and serve index.html
-# This allows React/Next.js routing to work
+# Serve frontend for non-API routes
 urlpatterns += [
-    re_path(r'^.*$', TemplateView.as_view(template_name='index.html'), name='frontend'),
+    re_path(r'^(?!api/).*$', TemplateView.as_view(template_name='index.html'), name='frontend'),
 ]

@@ -8,10 +8,11 @@ pip install -r requirements.txt
 echo "🎨 Building frontend..."
 if [ -d "frontend" ] && [ -f "frontend/package.json" ]; then
     cd frontend
-    npm install
+    npm ci --legacy-peer-deps
     npm run build
     cd ..
     echo "✅ Frontend built successfully!"
+    echo "📁 Frontend files in: frontend/dist/"
 else
     echo "⚠️  No frontend found, skipping..."
 fi
