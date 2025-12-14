@@ -103,12 +103,13 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = '/static/'
+STATIC_URL = '/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = []
 if (BASE_DIR / 'frontend/dist').exists():
     STATICFILES_DIRS.append(BASE_DIR / 'frontend/dist')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+WHITENOISE_ROOT = BASE_DIR / 'frontend/dist'
 
 # Media files (for user uploads)
 MEDIA_URL = '/media/'
