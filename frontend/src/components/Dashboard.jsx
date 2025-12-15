@@ -12,38 +12,48 @@ function Dashboard() {
   const tools = [
     {
       title: 'AI Thumbnail Generator',
-      description: 'Generate professional YouTube thumbnails using AI',
-      icon: '🎨',
       image: '/ai_thumbnail_generator.png',
       path: '/thumbnail'
     },
     {
       title: 'AI Search Thumbnail',
-      description: 'Search and analyze trending thumbnails',
-      icon: '🔍',
       image: '/ai_search_thmbnail.png',
       path: '/analytics'
     },
     {
       title: 'Content Generator',
-      description: 'Create engaging video content ideas with AI',
-      icon: '📝',
       image: '/content_creation.png',
       path: '/content'
     },
     {
       title: 'Outlier Detection',
-      description: 'Identify high and low performing videos',
-      icon: '📊',
       image: '/outlier.png',
       path: '/analytics'
     },
     {
       title: 'Trending Hashtags',
-      description: 'Discover trending hashtags for your niche',
-      icon: '#️⃣',
       image: '/trending hastag.png',
       path: '/hashtags'
+    },
+    {
+      title: 'Keyword Research',
+      image: '/ai_thumbnail_generator.png',
+      path: '/keywords'
+    },
+    {
+      title: 'Upload Streak Analysis',
+      image: '/streak.jpg',
+      path: '/analytics'
+    },
+    {
+      title: 'Video Analytics',
+      image: '/outlier.png',
+      path: '/analytics'
+    },
+    {
+      title: 'Channel Insights',
+      image: '/content_creation.png',
+      path: '/analytics'
     }
   ]
 
@@ -86,8 +96,8 @@ function Dashboard() {
             <span>AI Content Generator</span>
           </button>
           <button className="nav-item" onClick={handleLogout}>
-            <span className="nav-icon">👤</span>
-            <span>Admin</span>
+            <span className="nav-icon">🚪</span>
+            <span>Logout</span>
           </button>
         </nav>
       </aside>
@@ -95,7 +105,10 @@ function Dashboard() {
       <main className="main-content">
         <header className="top-bar">
           <h1>5.2 Admin Dashboard</h1>
-          <button className="notification-btn">🔔<span className="badge">1</span></button>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <button className="notification-btn">🔔<span className="badge">1</span></button>
+            <button className="btn btn-secondary" onClick={handleLogout}>Logout</button>
+          </div>
         </header>
 
         <div className="banner">
