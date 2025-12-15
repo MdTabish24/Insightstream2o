@@ -14,16 +14,21 @@ class OutlierView(APIView):
     def get(self, request):
         try:
             channel_id = request.query_params.get('channel_id')
+            logger.info(f"[OutlierView] Request from {request.user.email}, channel_id: {channel_id}")
+            
             if not channel_id:
+                logger.warning(f"[OutlierView] Missing channel_id")
                 return Response(
                     {'error': {'code': 'VALIDATION_ERROR', 'message': 'channel_id required'}},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+            
             service = AnalyticsService()
             result = service.detect_outliers(channel_id=channel_id)
+            logger.info(f"[OutlierView] Success: {len(result.get('high_outliers', []))} high, {len(result.get('low_outliers', []))} low")
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
-            logger.error(f'Outlier detection error: {str(e)}')
+            logger.error(f"[OutlierView] Error: {str(e)}", exc_info=True)
             return Response(
                 {'error': {'code': 'OUTLIER_DETECTION_ERROR', 'message': str(e)}},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -35,16 +40,21 @@ class UploadStreakView(APIView):
     def get(self, request):
         try:
             channel_id = request.query_params.get('channel_id')
+            logger.info(f"[UploadStreakView] Request from {request.user.email}, channel_id: {channel_id}")
+            
             if not channel_id:
+                logger.warning(f"[UploadStreakView] Missing channel_id")
                 return Response(
                     {'error': {'code': 'VALIDATION_ERROR', 'message': 'channel_id required'}},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+            
             service = AnalyticsService()
             result = service.analyze_upload_streak(channel_id=channel_id)
+            logger.info(f"[UploadStreakView] Success: Score={result.get('algorithm_score', 0)}, Videos={result.get('total_videos', 0)}")
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
-            logger.error(f'Upload streak analysis error: {str(e)}')
+            logger.error(f"[UploadStreakView] Error: {str(e)}", exc_info=True)
             return Response(
                 {'error': {'code': 'UPLOAD_STREAK_ERROR', 'message': str(e)}},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

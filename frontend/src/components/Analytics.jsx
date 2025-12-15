@@ -17,10 +17,18 @@ function Analytics() {
     setOutliers(null)
 
     try {
+      console.log('Detecting outliers for channel:', channelId)
       const response = await analyticsAPI.detectOutliers(channelId)
-      setOutliers(response.data)
+      console.log('Outliers response:', response.data)
+      
+      if (response.data.error) {
+        setError(response.data.error)
+      } else {
+        setOutliers(response.data)
+      }
     } catch (err) {
-      setError(err.response?.data?.error?.message || 'Failed to detect outliers')
+      console.error('Outlier detection error:', err)
+      setError(err.response?.data?.error?.message || err.response?.data?.error || 'Failed to detect outliers')
     } finally {
       setLoading(false)
     }
@@ -33,10 +41,18 @@ function Analytics() {
     setStreak(null)
 
     try {
+      console.log('Analyzing upload streak for channel:', channelId)
       const response = await analyticsAPI.analyzeUploadStreak(channelId)
-      setStreak(response.data)
+      console.log('Upload streak response:', response.data)
+      
+      if (response.data.error) {
+        setError(response.data.error)
+      } else {
+        setStreak(response.data)
+      }
     } catch (err) {
-      setError(err.response?.data?.error?.message || 'Failed to analyze streak')
+      console.error('Upload streak error:', err)
+      setError(err.response?.data?.error?.message || err.response?.data?.error || 'Failed to analyze streak')
     } finally {
       setLoading(false)
     }
@@ -57,7 +73,7 @@ function Analytics() {
         
         <input
           type="text"
-          placeholder="Enter YouTube Channel ID (e.g., UC_x5XG1OV2P6uZZ5FSM9Ttw)"
+          placeholder="Enter Channel URL or @username (e.g., @MrBeast or https://youtube.com/@MrBeast)"
           value={channelId}
           onChange={(e) => setChannelId(e.target.value)}
         />

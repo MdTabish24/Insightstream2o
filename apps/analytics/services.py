@@ -17,10 +17,15 @@ class AnalyticsService:
     def detect_outliers(self, channel_id: str) -> dict:
         """Detect outlier videos using IQR method and SmartScore."""
         try:
+            logger.info(f"[AnalyticsService] ===== OUTLIER DETECTION START =====")
+            logger.info(f"[AnalyticsService] Channel ID: {channel_id}")
+            
             # Get channel videos
             videos = youtube_client.get_channel_videos(channel_id, max_results=50)
+            logger.info(f"[AnalyticsService] Retrieved {len(videos)} videos")
             
             if len(videos) < 4:
+                logger.warning(f"[AnalyticsService] Not enough videos: {len(videos)} (need 4+)")
                 return {
                     'channel_id': channel_id,
                     'error': 'Not enough videos for outlier detection (minimum 4 required)',
@@ -102,6 +107,9 @@ class AnalyticsService:
             high_outliers.sort(key=lambda x: x['smart_score'], reverse=True)
             low_outliers.sort(key=lambda x: x['smart_score'])
             
+            logger.info(f"[AnalyticsService] Found {len(high_outliers)} high outliers, {len(low_outliers)} low outliers")
+            logger.info(f"[AnalyticsService] ===== OUTLIER DETECTION COMPLETE =====")
+            
             return {
                 'channel_id': channel_id,
                 'total_videos': len(videos),
@@ -116,16 +124,24 @@ class AnalyticsService:
                 }
             }
         except YouTubeAPIError as e:
-            logger.error(f'YouTube API error in outlier detection: {str(e)}')
+            logger.error(f"[AnalyticsService] YouTube API error: {str(e)}", exc_info=True)
+            return {'channel_id': channel_id, 'error': str(e), 'high_outliers': [], 'low_outliers': []}
+        except Exception as e:
+            logger.error(f"[AnalyticsService] Unexpected error: {str(e)}", exc_info=True)
             return {'channel_id': channel_id, 'error': str(e), 'high_outliers': [], 'low_outliers': []}
     
     def analyze_upload_streak(self, channel_id: str) -> dict:
         """Analyze upload consistency and calculate algorithm score."""
         try:
+            logger.info(f"[AnalyticsService] ===== UPLOAD STREAK ANALYSIS START =====")
+            logger.info(f"[AnalyticsService] Channel ID: {channel_id}")
+            
             # Get last 50 videos
             videos = youtube_client.get_channel_videos(channel_id, max_results=50)
+            logger.info(f"[AnalyticsService] Retrieved {len(videos)} videos")
             
             if not videos:
+                logger.warning(f"[AnalyticsService] No videos found for channel")
                 return {
                     'channel_id': channel_id,
                     'error': 'No videos found for channel',
@@ -200,7 +216,11 @@ class AnalyticsService:
             try:
                 growth_suggestions = gemini_client.generate_growth_suggestions(channel_data)
             except AIServiceUnavailable:
+                logger.warning(f"[AnalyticsService] Gemini unavailable, using fallback suggestions")
                 growth_suggestions = self._fallback_suggestions(algorithm_score, avg_gap)
+            
+            logger.info(f"[AnalyticsService] Algorithm Score: {algorithm_score}")
+            logger.info(f"[AnalyticsService] ===== UPLOAD STREAK ANALYSIS COMPLETE =====")
             
             return {
                 'channel_id': channel_id,
@@ -230,7 +250,10 @@ class AnalyticsService:
                 'growth_suggestions': growth_suggestions
             }
         except YouTubeAPIError as e:
-            logger.error(f'YouTube API error in upload streak analysis: {str(e)}')
+            logger.error(f"[AnalyticsService] YouTube API error: {str(e)}", exc_info=True)
+            return {'channel_id': channel_id, 'error': str(e), 'algorithm_score': 0}
+        except Exception as e:
+            logger.error(f"[AnalyticsService] Unexpected error: {str(e)}", exc_info=True)
             return {'channel_id': channel_id, 'error': str(e), 'algorithm_score': 0}
     
     def _is_short_video(self, duration: str) -> bool:
