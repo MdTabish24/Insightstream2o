@@ -50,6 +50,24 @@ function ThumbnailGenerator() {
     }
   }
 
+  const handleDownload = async (url, filename = 'thumbnail.png') => {
+    try {
+      const response = await fetch(url)
+      const blob = await response.blob()
+      const blobUrl = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(blobUrl)
+    } catch (err) {
+      console.error('Download failed:', err)
+      window.open(url, '_blank')
+    }
+  }
+
   return (
     <div className="container">
       <div className="nav">
@@ -92,7 +110,7 @@ function ThumbnailGenerator() {
               onLoad={() => console.log('Image loaded successfully:', thumbnail)}
             />
             <button 
-              onClick={() => window.open(thumbnail, '_blank')} 
+              onClick={() => handleDownload(thumbnail, `thumbnail_${Date.now()}.png`)} 
               className="btn btn-secondary"
               style={{ marginTop: '16px', width: '100%' }}
             >
@@ -126,7 +144,7 @@ function ThumbnailGenerator() {
                   {new Date(item.created_at).toLocaleDateString()}
                 </p>
                 <button 
-                  onClick={() => window.open(item.thumbnail_url, '_blank')} 
+                  onClick={() => handleDownload(item.thumbnail_url, `thumbnail_${item.id}.png`)} 
                   className="btn btn-secondary"
                   style={{ marginTop: '8px', width: '100%', padding: '8px' }}
                 >
