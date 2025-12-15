@@ -17,7 +17,6 @@ function ThumbnailGenerator() {
   const loadHistory = async () => {
     try {
       const response = await thumbnailAPI.getHistory()
-      // Handle both paginated and non-paginated responses
       const data = response.data.results || response.data
       setHistory(Array.isArray(data) ? data : [])
     } catch (err) {
@@ -39,7 +38,7 @@ function ThumbnailGenerator() {
       if (thumbnailUrl) {
         setThumbnail(thumbnailUrl)
         await loadHistory()
-        setPrompt('') // Clear prompt after success
+        setPrompt('')
       } else {
         setError('No thumbnail URL received from server')
       }
@@ -134,7 +133,7 @@ function ThumbnailGenerator() {
                   Download
                 </button>
               </div>
-            ))
+            ))}
           </div>
         </div>
       )}
