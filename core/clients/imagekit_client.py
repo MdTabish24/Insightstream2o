@@ -1,6 +1,5 @@
 import base64
 import requests
-from io import BytesIO
 from django.conf import settings
 from imagekitio import ImageKit
 from core.utils.retry import retry_with_backoff
@@ -22,18 +21,32 @@ class ImageKitClient:
             )
         return self._client
     
-    @retry_with_backoff(max_retries=3, base_delay=1.0)
+    @retry_with_backoff(max_retries=2, base_delay=1.0)
     def upload_from_url(self, image_url: str, file_name: str = 'thumbnail') -> str:
         """Download image from URL and upload to ImageKit. Returns CDN URL."""
+        import logging
+        logger = logging.getLogger(__name__)
+        
         try:
-            # Download image
-            response = requests.get(image_url, timeout=60)
+            logger.info(f"[ImageKit] Starting download from URL: {image_url[:100]}...")
+            response = requests.get(
+                image_url, 
+                timeout=60,
+                headers={'User-Agent': 'Mozilla/5.0'}
+            )
             response.raise_for_status()
+            logger.info(f"[ImageKit] Downloaded {len(response.content)} bytes, content-type: {response.headers.get('content-type')}")
             
-            # Convert to base64
+            content_type = response.headers.get('content-type', '')
+            if not content_type.startswith('image/'):
+                logger.error(f"[ImageKit] Invalid content type: {content_type}")
+                raise InsightStreamException(f'Invalid content type: {content_type}', 'INVALID_IMAGE')
+            
+            logger.info(f"[ImageKit] Converting to base64...")
             image_base64 = base64.b64encode(response.content).decode('utf-8')
+            logger.info(f"[ImageKit] Base64 length: {len(image_base64)}")
             
-            # Upload to ImageKit
+            logger.info(f"[ImageKit] Uploading to ImageKit with filename: {file_name}.png")
             client = self._get_client()
             result = client.upload_file(
                 file=image_base64,
@@ -43,17 +56,38 @@ class ImageKitClient:
                     "use_unique_file_name": True,
                 }
             )
+            logger.info(f"[ImageKit] Upload result type: {type(result)}, has url attr: {hasattr(result, 'url')}")
             
-            if result.url:
+            if hasattr(result, 'url') and result.url:
+                logger.info(f"[ImageKit] Success! URL from result.url: {result.url}")
                 return result.url
-            raise InsightStreamException('ImageKit upload failed', 'UPLOAD_ERROR')
+            elif isinstance(result, dict) and 'url' in result:
+                logger.info(f"[ImageKit] Success! URL from dict: {result['url']}")
+                return result['url']
+            elif hasattr(result, 'response_metadata'):
+                logger.info(f"[ImageKit] Checking response_metadata...")
+                if hasattr(result.response_metadata, 'url'):
+                    logger.info(f"[ImageKit] Success! URL from metadata.url: {result.response_metadata.url}")
+                    return result.response_metadata.url
+                if hasattr(result.response_metadata, 'raw') and isinstance(result.response_metadata.raw, dict):
+                    url = result.response_metadata.raw.get('url')
+                    if url:
+                        logger.info(f"[ImageKit] Success! URL from metadata.raw: {url}")
+                        return url
+            
+            logger.error(f"[ImageKit] No URL found in result. Type: {type(result)}, Dir: {dir(result)[:5]}")
+            raise InsightStreamException(f'ImageKit upload failed: No URL in response. Result type: {type(result)}', 'UPLOAD_ERROR')
             
         except requests.RequestException as e:
+            logger.error(f"[ImageKit] Download failed: {str(e)}")
             raise InsightStreamException(f'Failed to download image: {str(e)}', 'DOWNLOAD_ERROR')
+        except InsightStreamException:
+            raise
         except Exception as e:
+            logger.error(f"[ImageKit] Unexpected error: {str(e)}", exc_info=True)
             raise InsightStreamException(f'ImageKit error: {str(e)}', 'IMAGEKIT_ERROR')
     
-    @retry_with_backoff(max_retries=3, base_delay=1.0)
+    @retry_with_backoff(max_retries=2, base_delay=1.0)
     def upload_from_bytes(self, image_bytes: bytes, file_name: str = 'thumbnail') -> str:
         """Upload image bytes to ImageKit. Returns CDN URL."""
         try:
@@ -69,9 +103,18 @@ class ImageKitClient:
                 }
             )
             
-            if result.url:
+            if hasattr(result, 'url') and result.url:
                 return result.url
-            raise InsightStreamException('ImageKit upload failed', 'UPLOAD_ERROR')
+            elif isinstance(result, dict) and 'url' in result:
+                return result['url']
+            elif hasattr(result, 'response_metadata'):
+                if hasattr(result.response_metadata, 'url'):
+                    return result.response_metadata.url
+                if hasattr(result.response_metadata, 'raw') and isinstance(result.response_metadata.raw, dict):
+                    url = result.response_metadata.raw.get('url')
+                    if url:
+                        return url
+            raise InsightStreamException(f'ImageKit upload failed: No URL. Result type: {type(result)}', 'UPLOAD_ERROR')
             
         except Exception as e:
             raise InsightStreamException(f'ImageKit error: {str(e)}', 'IMAGEKIT_ERROR')

@@ -23,18 +23,28 @@ class ThumbnailGenerateView(generics.CreateAPIView):
     serializer_class = ThumbnailGenerateSerializer
     
     def create(self, request, *args, **kwargs):
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.info(f"[ThumbnailView] Received request from user: {request.user.email}")
+        logger.info(f"[ThumbnailView] Request data: {request.data}")
+        
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        logger.info(f"[ThumbnailView] Validation passed. Prompt: {serializer.validated_data['prompt'][:50]}...")
         
         try:
+            logger.info(f"[ThumbnailView] Calling thumbnail_service.generate_thumbnail...")
             result = thumbnail_service.generate_thumbnail(
                 prompt=serializer.validated_data['prompt'],
                 ref_image=serializer.validated_data.get('ref_image'),
                 user=request.user
             )
+            logger.info(f"[ThumbnailView] Success! Thumbnail ID: {result.get('id')}, URL: {result.get('thumbnail_url')[:100]}...")
             return Response(result, status=status.HTTP_201_CREATED)
             
         except AIServiceUnavailable as e:
+            logger.error(f"[ThumbnailView] AI Service Unavailable: {str(e.message)}")
             return Response({
                 'error': {
                     'code': 'AI_SERVICE_UNAVAILABLE',
@@ -44,6 +54,7 @@ class ThumbnailGenerateView(generics.CreateAPIView):
             }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
             
         except InsightStreamException as e:
+            logger.error(f"[ThumbnailView] InsightStream Exception: {e.code} - {e.message}")
             return Response({
                 'error': {
                     'code': e.code,
@@ -53,6 +64,7 @@ class ThumbnailGenerateView(generics.CreateAPIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
         except Exception as e:
+            logger.error(f"[ThumbnailView] Unexpected error: {str(e)}", exc_info=True)
             return Response({
                 'error': {
                     'code': 'INTERNAL_ERROR',
@@ -75,4 +87,9 @@ class ThumbnailHistoryView(generics.ListAPIView):
     serializer_class = ThumbnailSerializer
     
     def get_queryset(self):
-        return Thumbnail.objects.filter(user=self.request.user)
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"[ThumbnailHistory] Fetching history for user: {self.request.user.email}")
+        queryset = Thumbnail.objects.filter(user=self.request.user)
+        logger.info(f"[ThumbnailHistory] Found {queryset.count()} thumbnails")
+        return queryset

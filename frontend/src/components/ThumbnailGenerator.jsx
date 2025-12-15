@@ -17,9 +17,12 @@ function ThumbnailGenerator() {
   const loadHistory = async () => {
     try {
       const response = await thumbnailAPI.getHistory()
-      setHistory(response.data.results || response.data)
+      // Handle both paginated and non-paginated responses
+      const data = response.data.results || response.data
+      setHistory(Array.isArray(data) ? data : [])
     } catch (err) {
       console.error('Failed to load history:', err)
+      setHistory([])
     }
   }
 
@@ -31,10 +34,18 @@ function ThumbnailGenerator() {
 
     try {
       const response = await thumbnailAPI.generate({ prompt })
-      setThumbnail(response.data.thumbnail_url)
-      loadHistory()
+      console.log('Thumbnail response:', response.data)
+      const thumbnailUrl = response.data.thumbnail_url
+      if (thumbnailUrl) {
+        setThumbnail(thumbnailUrl)
+        await loadHistory()
+        setPrompt('') // Clear prompt after success
+      } else {
+        setError('No thumbnail URL received from server')
+      }
     } catch (err) {
-      setError(err.response?.data?.error?.message || 'Failed to generate thumbnail')
+      console.error('Thumbnail generation error:', err)
+      setError(err.response?.data?.error?.message || err.response?.data?.message || 'Failed to generate thumbnail')
     } finally {
       setLoading(false)
     }
@@ -69,7 +80,18 @@ function ThumbnailGenerator() {
         {thumbnail && (
           <div style={{ marginTop: '24px' }}>
             <h3 style={{ color: '#667eea', marginBottom: '16px' }}>Generated Thumbnail:</h3>
-            <img src={thumbnail} alt="Generated thumbnail" className="thumbnail-preview" />
+            <img 
+              src={thumbnail} 
+              alt="Generated thumbnail" 
+              className="thumbnail-preview"
+              crossOrigin="anonymous"
+              onError={(e) => {
+                console.error('Image failed to load:', thumbnail)
+                setError('Failed to load generated image. The image URL may be invalid or blocked by CORS.')
+                setThumbnail(null)
+              }}
+              onLoad={() => console.log('Image loaded successfully:', thumbnail)}
+            />
             <button 
               onClick={() => window.open(thumbnail, '_blank')} 
               className="btn btn-secondary"
@@ -89,10 +111,18 @@ function ThumbnailGenerator() {
               <div key={item.id} style={{ border: '1px solid #e0e0e0', borderRadius: '8px', padding: '12px' }}>
                 <img 
                   src={item.thumbnail_url} 
-                  alt={item.prompt} 
+                  alt={item.prompt || item.user_input || 'Thumbnail'} 
                   style={{ width: '100%', borderRadius: '4px', marginBottom: '8px' }}
+                  crossOrigin="anonymous"
+                  loading="lazy"
+                  onError={(e) => {
+                    e.target.style.display = 'none'
+                    console.error('History image failed to load:', item.thumbnail_url)
+                  }}
                 />
-                <p style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>{item.prompt}</p>
+                <p style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>
+                  {item.prompt || item.user_input || 'No description'}
+                </p>
                 <p style={{ fontSize: '12px', color: '#999' }}>
                   {new Date(item.created_at).toLocaleDateString()}
                 </p>
@@ -104,7 +134,7 @@ function ThumbnailGenerator() {
                   Download
                 </button>
               </div>
-            ))}
+            ))
           </div>
         </div>
       )}

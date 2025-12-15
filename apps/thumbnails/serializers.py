@@ -3,10 +3,12 @@ from .models import Thumbnail
 
 class ThumbnailSerializer(serializers.ModelSerializer):
     """Serializer for thumbnail model"""
+    prompt = serializers.CharField(source='user_input', read_only=True)
+    
     class Meta:
         model = Thumbnail
-        fields = ['id', 'user_input', 'thumbnail_url', 'ref_image', 'created_at']
-        read_only_fields = ['id', 'thumbnail_url', 'created_at']
+        fields = ['id', 'prompt', 'user_input', 'thumbnail_url', 'ref_image', 'created_at']
+        read_only_fields = ['id', 'prompt', 'user_input', 'thumbnail_url', 'created_at']
 
 class ThumbnailGenerateSerializer(serializers.Serializer):
     """Serializer for thumbnail generation request"""
