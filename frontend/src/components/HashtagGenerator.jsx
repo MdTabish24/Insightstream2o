@@ -4,7 +4,7 @@ import { hashtagAPI } from '../api'
 
 function HashtagGenerator() {
   const [topic, setTopic] = useState('')
-  const [hashtags, setHashtags] = useState(null)
+  const [hashtags, setHashtags] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const navigate = useNavigate()
@@ -13,101 +13,113 @@ function HashtagGenerator() {
     e.preventDefault()
     setError('')
     setLoading(true)
-    setHashtags(null)
 
     try {
       const response = await hashtagAPI.generate({ topic })
-      setHashtags(response.data)
+      console.log('Hashtags response:', response.data)
+      setHashtags(response.data.hashtags || [])
     } catch (err) {
+      console.error('Hashtag generation error:', err)
       setError(err.response?.data?.error?.message || 'Failed to generate hashtags')
     } finally {
       setLoading(false)
     }
   }
 
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text)
-    alert('Copied to clipboard!')
+  const handleLogout = () => {
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
+    navigate('/login')
   }
 
-  const renderHashtagList = (list, title) => (
-    <div style={{ marginBottom: '24px' }}>
-      <h4 style={{ color: '#667eea', marginBottom: '12px' }}>{title}</h4>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-        {list.map((item, index) => (
-          <div
-            key={index}
-            onClick={() => copyToClipboard(item.hashtag)}
-            style={{
-              background: '#f7fafc',
-              padding: '8px 16px',
-              borderRadius: '20px',
-              cursor: 'pointer',
-              border: '2px solid #667eea',
-              transition: 'all 0.3s'
-            }}
-            onMouseEnter={(e) => e.target.style.background = '#667eea'}
-            onMouseLeave={(e) => e.target.style.background = '#f7fafc'}
-          >
-            <span style={{ fontWeight: 'bold' }}>{item.hashtag}</span>
-            <span style={{ fontSize: '12px', marginLeft: '8px', color: '#666' }}>
-              ({item.usage_count})
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-
   return (
-    <div className="container">
-      <div className="nav">
-        <h1>🎬 InsightStream</h1>
-        <button onClick={() => navigate('/')} className="btn btn-secondary">
-          Back to Dashboard
-        </button>
-      </div>
-
-      <div className="card">
-        <h2 style={{ color: '#667eea', marginBottom: '24px' }}>#️⃣ Hashtag Generator</h2>
-        {error && <div className="error">{error}</div>}
+    <div className="dashboard-layout">
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <img src="/insight_stream_logo.png" alt="InsightStream" className="logo" />
+          <h2>INSIGHTSTREAM</h2>
+          <p>Build Awesome</p>
+        </div>
         
-        <form onSubmit={handleGenerate}>
-          <input
-            type="text"
-            placeholder="Enter your topic (e.g., 'Gaming')"
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            required
-          />
-          <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Generating...' : 'Generate Hashtags'}
+        <nav className="sidebar-nav">
+          <button className="nav-item" onClick={() => navigate('/')}>
+            <span className="nav-icon">🏠</span>
+            <span>Home</span>
           </button>
+          <button className="nav-item" onClick={() => navigate('/thumbnail')}>
+            <span className="nav-icon">🎨</span>
+            <span>Thumbnail Generator</span>
+          </button>
+          <button className="nav-item" onClick={() => navigate('/search')}>
+            <span className="nav-icon">🔍</span>
+            <span>Thumbnail Search</span>
+          </button>
+          <button className="nav-item active" onClick={() => navigate('/hashtags')}>
+            <span className="nav-icon">🔑</span>
+            <span>Keywords</span>
+          </button>
+          <button className="nav-item" onClick={() => navigate('/keywords')}>
+            <span className="nav-icon">📊</span>
+            <span>Keyword Research</span>
+          </button>
+          <button className="nav-item" onClick={() => navigate('/analytics')}>
+            <span className="nav-icon">📈</span>
+            <span>Outlier</span>
+          </button>
+          <button className="nav-item" onClick={() => navigate('/content')}>
+            <span className="nav-icon">💡</span>
+            <span>AI Content Generator</span>
+          </button>
+          <button className="nav-item" onClick={handleLogout}>
+            <span className="nav-icon">🚪</span>
+            <span>Logout</span>
+          </button>
+        </nav>
+      </aside>
+
+      <main className="main-content">
+        <header className="top-bar">
+          <h1>Trending Hashtags Generator</h1>
+          <button className="btn btn-secondary" onClick={handleLogout}>Logout</button>
+        </header>
+
+        <div className="hashtag-hero">
+          <p>Generate trending YouTube hashtags to increase your video reach and engagement.</p>
+        </div>
+
+        {error && <div className="error">{error}</div>}
+
+        <form onSubmit={handleGenerate} className="hashtag-form">
+          <div className="search-input-group">
+            <input
+              type="text"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder="How to learn coding"
+              required
+            />
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              ✨ Generate
+            </button>
+          </div>
         </form>
 
-        {hashtags && (
-          <div style={{ marginTop: '24px' }}>
-            <p style={{ color: '#666', marginBottom: '16px', fontStyle: 'italic' }}>
-              Click on any hashtag to copy it!
-            </p>
-            {renderHashtagList(hashtags.real_hashtags, '🔥 Real Trending Hashtags')}
-            {renderHashtagList(hashtags.ai_hashtags, '🤖 AI Generated Hashtags')}
-            <div style={{ marginTop: '24px' }}>
-              <h4 style={{ color: '#667eea', marginBottom: '12px' }}>📋 All Combined</h4>
-              <div className="result-card">
-                <p>{hashtags.combined.join(' ')}</p>
-                <button
-                  onClick={() => copyToClipboard(hashtags.combined.join(' '))}
-                  className="btn btn-secondary"
-                  style={{ marginTop: '12px' }}
-                >
-                  Copy All
-                </button>
-              </div>
+        {hashtags.length > 0 && (
+          <section className="hashtags-section">
+            <h3>📈 Trending Hashtags</h3>
+            <div className="hashtags-grid">
+              {hashtags.map((tag, index) => (
+                <div key={index} className="hashtag-card">
+                  <div className="hashtag-title">{tag}</div>
+                  <div className="hashtag-badge real">Real YouTube data</div>
+                  <div className="hashtag-badge engagement">high</div>
+                  <div className="hashtag-badge trending">trending</div>
+                </div>
+              ))}
             </div>
-          </div>
+          </section>
         )}
-      </div>
+      </main>
     </div>
   )
 }

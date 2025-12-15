@@ -1,26 +1,29 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { keywordAPI } from '../api'
+import { analyticsAPI } from '../api'
 
-function KeywordResearch() {
+function ThumbnailSearch() {
   const [query, setQuery] = useState('')
-  const [keywords, setKeywords] = useState([])
+  const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
-  const handleResearch = async (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault()
+    if (!query.trim()) return
+
     setError('')
     setLoading(true)
+    setResults([])
 
     try {
-      const response = await keywordAPI.research({ query })
-      console.log('Keywords response:', response.data)
-      setKeywords(response.data.keywords || [])
+      const response = await analyticsAPI.searchThumbnails({ query })
+      console.log('Search response:', response.data)
+      setResults(response.data.results || [])
     } catch (err) {
-      console.error('Keyword research error:', err)
-      setError(err.response?.data?.error?.message || 'Failed to research keywords')
+      console.error('Search error:', err)
+      setError(err.response?.data?.error?.message || 'Search failed')
     } finally {
       setLoading(false)
     }
@@ -50,17 +53,13 @@ function KeywordResearch() {
             <span className="nav-icon">🎨</span>
             <span>Thumbnail Generator</span>
           </button>
-          <button className="nav-item" onClick={() => navigate('/search')}>
+          <button className="nav-item active" onClick={() => navigate('/search')}>
             <span className="nav-icon">🔍</span>
             <span>Thumbnail Search</span>
           </button>
-          <button className="nav-item" onClick={() => navigate('/hashtags')}>
+          <button className="nav-item" onClick={() => navigate('/keywords')}>
             <span className="nav-icon">🔑</span>
             <span>Keywords</span>
-          </button>
-          <button className="nav-item active" onClick={() => navigate('/keywords')}>
-            <span className="nav-icon">📊</span>
-            <span>Keyword Research</span>
           </button>
           <button className="nav-item" onClick={() => navigate('/analytics')}>
             <span className="nav-icon">📈</span>
@@ -79,58 +78,76 @@ function KeywordResearch() {
 
       <main className="main-content">
         <header className="top-bar">
-          <h1>AI Keyword Research</h1>
+          <h1>AI Thumbnail Search</h1>
           <button className="btn btn-secondary" onClick={handleLogout}>Logout</button>
         </header>
 
-        <div className="keyword-hero">
-          <p>Discover trending keywords for your YouTube videos. Get AI-powered keyword suggestions based on real YouTube data.</p>
+        <div className="search-hero">
+          <h2>AI Thumbnail Search: Find the Perfect Match Instantly!</h2>
+          <p>Turn any video into a high-impact, attention-grabbing thumbnail in seconds! Our AI-powered YouTube thumbnail generator creates professional, eye-catching designs instantly—no design skills needed, just more clicks and views.</p>
         </div>
 
-        {error && <div className="error">{error}</div>}
-
-        <form onSubmit={handleResearch} className="keyword-form">
+        <form onSubmit={handleSearch} className="search-form">
           <div className="search-input-group">
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="How to learn SQL"
+              placeholder="jordan peterson on a car"
               required
             />
-            <button type="submit" className="btn-search" disabled={loading}>
-              🔍
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              🔍 Search
             </button>
           </div>
         </form>
 
+        {error && <div className="error">{error}</div>}
+
         {loading && (
           <div className="loading-state">
             <div className="spinner"></div>
-            <p>Researching keywords...</p>
+            <p>Searching for thumbnails...</p>
           </div>
         )}
 
-        {keywords.length > 0 && (
-          <section className="keywords-section">
-            <h3>📈 Primary Keywords</h3>
-            <div className="keywords-grid">
-              {keywords.map((kw, index) => (
-                <div key={index} className="keyword-card">
-                  <h4>{kw.keyword || kw}</h4>
-                  <div className="keyword-metrics">
-                    <span className="metric">Volume: {kw.volume || 'high'}</span>
-                    <span className="metric">Competition: {kw.competition || 'high'}</span>
-                    <span className="metric">Score: {kw.score || '98'}</span>
+        {results.length > 0 && (
+          <div className="search-results">
+            <div className="results-grid">
+              {results.map((result, index) => (
+                <div key={index} className="result-card-search">
+                  <div className="result-thumbnail">
+                    <img 
+                      src={result.thumbnail_url} 
+                      alt={result.title}
+                      loading="lazy"
+                      onError={(e) => {
+                        e.target.src = '/ai_thumbnail_generator.png'
+                      }}
+                    />
+                  </div>
+                  <div className="result-info">
+                    <h4>{result.title}</h4>
+                    <p className="channel-name">{result.channel_title}</p>
+                    <div className="result-stats">
+                      <span>👁️ {result.views?.toLocaleString() || 0}</span>
+                      <span>👍 {result.likes?.toLocaleString() || 0}</span>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
-          </section>
+          </div>
+        )}
+
+        {!loading && results.length === 0 && query && (
+          <div className="no-results">
+            <p>No results found. Try a different search term.</p>
+          </div>
         )}
       </main>
     </div>
   )
 }
 
-export default KeywordResearch
+export default ThumbnailSearch

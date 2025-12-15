@@ -8,6 +8,7 @@ function ThumbnailGenerator() {
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [progress, setProgress] = useState(0)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -30,15 +31,30 @@ function ThumbnailGenerator() {
     setError('')
     setLoading(true)
     setThumbnail(null)
+    setProgress(0)
+
+    const progressInterval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(progressInterval)
+          return 90
+        }
+        return prev + 10
+      })
+    }, 2000)
 
     try {
       const response = await thumbnailAPI.generate({ prompt })
       console.log('Thumbnail response:', response.data)
       const thumbnailUrl = response.data.thumbnail_url
       if (thumbnailUrl) {
-        setThumbnail(thumbnailUrl)
-        await loadHistory()
-        setPrompt('')
+        setProgress(100)
+        setTimeout(() => {
+          setThumbnail(thumbnailUrl)
+          loadHistory()
+          setPrompt('')
+          setProgress(0)
+        }, 500)
       } else {
         setError('No thumbnail URL received from server')
       }
@@ -46,6 +62,7 @@ function ThumbnailGenerator() {
       console.error('Thumbnail generation error:', err)
       setError(err.response?.data?.error?.message || err.response?.data?.message || 'Failed to generate thumbnail')
     } finally {
+      clearInterval(progressInterval)
       setLoading(false)
     }
   }
@@ -68,93 +85,158 @@ function ThumbnailGenerator() {
     }
   }
 
-  return (
-    <div className="container">
-      <div className="nav">
-        <h1>🎬 InsightStream</h1>
-        <button onClick={() => navigate('/')} className="btn btn-secondary">
-          Back to Dashboard
-        </button>
-      </div>
+  const handleLogout = () => {
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
+    navigate('/login')
+  }
 
-      <div className="card">
-        <h2 style={{ color: '#667eea', marginBottom: '24px' }}>🎨 AI Thumbnail Generator</h2>
-        {error && <div className="error">{error}</div>}
+  return (
+    <div className="dashboard-layout">
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <img src="/insight_stream_logo.png" alt="InsightStream" className="logo" />
+          <h2>INSIGHTSTREAM</h2>
+          <p>Build Awesome</p>
+        </div>
         
-        <form onSubmit={handleGenerate}>
+        <nav className="sidebar-nav">
+          <button className="nav-item" onClick={() => navigate('/')}>
+            <span className="nav-icon">🏠</span>
+            <span>Home</span>
+          </button>
+          <button className="nav-item active" onClick={() => navigate('/thumbnail')}>
+            <span className="nav-icon">🎨</span>
+            <span>Thumbnail Generator</span>
+          </button>
+          <button className="nav-item" onClick={() => navigate('/analytics')}>
+            <span className="nav-icon">🔍</span>
+            <span>Thumbnail Search</span>
+          </button>
+          <button className="nav-item" onClick={() => navigate('/keywords')}>
+            <span className="nav-icon">🔑</span>
+            <span>Keywords</span>
+          </button>
+          <button className="nav-item" onClick={() => navigate('/keywords')}>
+            <span className="nav-icon">📊</span>
+            <span>Keyword Research</span>
+          </button>
+          <button className="nav-item" onClick={() => navigate('/analytics')}>
+            <span className="nav-icon">📈</span>
+            <span>Outlier</span>
+          </button>
+          <button className="nav-item" onClick={() => navigate('/content')}>
+            <span className="nav-icon">💡</span>
+            <span>AI Content Generator</span>
+          </button>
+          <button className="nav-item" onClick={handleLogout}>
+            <span className="nav-icon">🚪</span>
+            <span>Logout</span>
+          </button>
+        </nav>
+      </aside>
+
+      <main className="main-content">
+        <header className="top-bar">
+          <h1>AI Thumbnail Generator</h1>
+          <button className="btn btn-secondary" onClick={handleLogout}>Logout</button>
+        </header>
+
+        {error && <div className="error">{error}</div>}
+
+        {thumbnail && (
+          <div className="generated-thumbnail-card">
+            <img 
+              src={thumbnail} 
+              alt="Generated thumbnail" 
+              crossOrigin="anonymous"
+              onError={(e) => {
+                console.error('Image failed to load:', thumbnail)
+                setError('Failed to load generated image.')
+                setThumbnail(null)
+              }}
+            />
+            <button 
+              className="download-btn"
+              onClick={() => handleDownload(thumbnail, `thumbnail_${Date.now()}.png`)}
+            >
+              ⬇
+            </button>
+            <p className="thumbnail-prompt">{prompt || 'Generated thumbnail'}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleGenerate} className="generator-form">
           <textarea
             placeholder="Describe your thumbnail (e.g., 'A futuristic city at sunset with neon lights')"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             rows="4"
             required
+            disabled={loading}
           />
-          <button type="submit" className="btn btn-primary" disabled={loading}>
+
+          <div className="upload-grid">
+            <div className="upload-card disabled">
+              <div className="upload-icon">👤</div>
+              <h4>Include Face</h4>
+              <p>Upload face image</p>
+              <span className="coming-soon">Coming Soon</span>
+            </div>
+            <div className="upload-card disabled">
+              <div className="upload-icon">🖼️</div>
+              <h4>Reference Image</h4>
+              <p>Upload reference image</p>
+              <span className="coming-soon">Coming Soon</span>
+            </div>
+          </div>
+
+          <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
             {loading ? 'Generating...' : 'Generate Thumbnail'}
           </button>
+
+          {loading && (
+            <div className="progress-container">
+              <div className="progress-bar">
+                <div className="progress-fill" style={{ width: `${progress}%` }}></div>
+              </div>
+              <p className="progress-text">Generating thumbnail... {progress}%</p>
+            </div>
+          )}
         </form>
 
-        {thumbnail && (
-          <div style={{ marginTop: '24px' }}>
-            <h3 style={{ color: '#667eea', marginBottom: '16px' }}>Generated Thumbnail:</h3>
-            <img 
-              src={thumbnail} 
-              alt="Generated thumbnail" 
-              className="thumbnail-preview"
-              crossOrigin="anonymous"
-              onError={(e) => {
-                console.error('Image failed to load:', thumbnail)
-                setError('Failed to load generated image. The image URL may be invalid or blocked by CORS.')
-                setThumbnail(null)
-              }}
-              onLoad={() => console.log('Image loaded successfully:', thumbnail)}
-            />
-            <button 
-              onClick={() => handleDownload(thumbnail, `thumbnail_${Date.now()}.png`)} 
-              className="btn btn-secondary"
-              style={{ marginTop: '16px', width: '100%' }}
-            >
-              Download Thumbnail
-            </button>
-          </div>
+        {history.length > 0 && (
+          <section className="history-section">
+            <h3>Your Generated Thumbnails</h3>
+            <div className="history-grid">
+              {history.map((item) => (
+                <div key={item.id} className="history-card">
+                  <img 
+                    src={item.thumbnail_url} 
+                    alt={item.prompt || item.user_input || 'Thumbnail'} 
+                    crossOrigin="anonymous"
+                    loading="lazy"
+                    onError={(e) => {
+                      e.target.style.display = 'none'
+                      console.error('History image failed to load:', item.thumbnail_url)
+                    }}
+                  />
+                  <div className="history-info">
+                    <p className="history-prompt">{item.prompt || item.user_input || 'No description'}</p>
+                    <p className="history-date">{new Date(item.created_at).toLocaleDateString()}</p>
+                  </div>
+                  <button 
+                    className="history-download"
+                    onClick={() => handleDownload(item.thumbnail_url, `thumbnail_${item.id}.png`)}
+                  >
+                    ⬇ Download
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
         )}
-      </div>
-
-      {history.length > 0 && (
-        <div className="card" style={{ marginTop: '24px' }}>
-          <h2 style={{ color: '#667eea', marginBottom: '24px' }}>📚 Your Thumbnails</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-            {history.map((item) => (
-              <div key={item.id} style={{ border: '1px solid #e0e0e0', borderRadius: '8px', padding: '12px' }}>
-                <img 
-                  src={item.thumbnail_url} 
-                  alt={item.prompt || item.user_input || 'Thumbnail'} 
-                  style={{ width: '100%', borderRadius: '4px', marginBottom: '8px' }}
-                  crossOrigin="anonymous"
-                  loading="lazy"
-                  onError={(e) => {
-                    e.target.style.display = 'none'
-                    console.error('History image failed to load:', item.thumbnail_url)
-                  }}
-                />
-                <p style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>
-                  {item.prompt || item.user_input || 'No description'}
-                </p>
-                <p style={{ fontSize: '12px', color: '#999' }}>
-                  {new Date(item.created_at).toLocaleDateString()}
-                </p>
-                <button 
-                  onClick={() => handleDownload(item.thumbnail_url, `thumbnail_${item.id}.png`)} 
-                  className="btn btn-secondary"
-                  style={{ marginTop: '8px', width: '100%', padding: '8px' }}
-                >
-                  Download
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      </main>
     </div>
   )
 }

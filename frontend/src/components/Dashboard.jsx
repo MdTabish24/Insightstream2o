@@ -18,7 +18,7 @@ function Dashboard() {
     {
       title: 'AI Search Thumbnail',
       image: '/ai_search_thmbnail.png',
-      path: '/analytics'
+      path: '/search'
     },
     {
       title: 'Content Generator',
