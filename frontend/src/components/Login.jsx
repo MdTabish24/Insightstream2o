@@ -28,35 +28,49 @@ function Login({ setAuth }) {
   }
 
   return (
-    <div className="container">
-      <div className="nav">
-        <h1>🎬 InsightStream</h1>
-      </div>
-      <div className="card" style={{ maxWidth: '400px', margin: '0 auto' }}>
-        <h2 style={{ marginBottom: '24px', color: '#667eea' }}>Login</h2>
-        {error && <div className="error">{error}</div>}
-        <form onSubmit={handleSubmit}>
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: '100%' }}>
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
-        <p style={{ marginTop: '16px', textAlign: 'center' }}>
-          Don't have an account? <Link to="/register" style={{ color: '#667eea' }}>Register</Link>
-        </p>
+    <div className="auth-page">
+      <div className="auth-container">
+        <div className="auth-card">
+          <div className="auth-header">
+            <img src="/insight_stream_logo.png" alt="InsightStream" className="auth-logo" />
+            <h1>Welcome Back</h1>
+            <p>Sign in to your account</p>
+          </div>
+
+          {error && <div className="error">{error}</div>}
+
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label>Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                required
+              />
+            </div>
+
+            <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
+              {loading ? 'Signing in...' : 'Sign In'}
+            </button>
+          </form>
+
+          <div className="auth-footer">
+            <p>Don't have an account? <Link to="/register">Sign up</Link></p>
+          </div>
+        </div>
       </div>
     </div>
   )

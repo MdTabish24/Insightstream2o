@@ -42,14 +42,15 @@ class ImageKitClient:
                 logger.error(f"[ImageKit] Invalid content type: {content_type}")
                 raise InsightStreamException(f'Invalid content type: {content_type}', 'INVALID_IMAGE')
             
-            logger.info(f"[ImageKit] Converting to base64...")
+            logger.info(f"[ImageKit] Converting to base64 with data URI...")
             image_base64 = base64.b64encode(response.content).decode('utf-8')
-            logger.info(f"[ImageKit] Base64 length: {len(image_base64)}")
+            data_uri = f"data:{content_type};base64,{image_base64}"
+            logger.info(f"[ImageKit] Data URI length: {len(data_uri)}")
             
             logger.info(f"[ImageKit] Uploading to ImageKit with filename: {file_name}.png")
             client = self._get_client()
             result = client.upload_file(
-                file=image_base64,
+                file=data_uri,
                 file_name=f"{file_name}.png",
                 options={
                     "folder": "/thumbnails/",
@@ -92,10 +93,11 @@ class ImageKitClient:
         """Upload image bytes to ImageKit. Returns CDN URL."""
         try:
             image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+            data_uri = f"data:image/png;base64,{image_base64}"
             
             client = self._get_client()
             result = client.upload_file(
-                file=image_base64,
+                file=data_uri,
                 file_name=f"{file_name}.png",
                 options={
                     "folder": "/thumbnails/",
