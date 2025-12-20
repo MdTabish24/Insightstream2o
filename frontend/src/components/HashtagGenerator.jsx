@@ -17,7 +17,9 @@ function HashtagGenerator() {
     try {
       const response = await hashtagAPI.generate({ topic })
       console.log('Hashtags response:', response.data)
-      setHashtags(response.data.hashtags || [])
+      // Backend returns combined, real_hashtags, ai_hashtags
+      const combined = response.data.combined || response.data.hashtags || []
+      setHashtags(combined)
     } catch (err) {
       console.error('Hashtag generation error:', err)
       setError(err.response?.data?.error?.message || 'Failed to generate hashtags')
@@ -56,13 +58,13 @@ function HashtagGenerator() {
           </button>
           <button className="nav-item active" onClick={() => navigate('/hashtags')}>
             <span className="nav-icon">🔑</span>
-            <span>Keywords</span>
+            <span>Hashtags</span>
           </button>
           <button className="nav-item" onClick={() => navigate('/keywords')}>
             <span className="nav-icon">📊</span>
             <span>Keyword Research</span>
           </button>
-          <button className="nav-item" onClick={() => navigate('/analytics')}>
+          <button className="nav-item" onClick={() => navigate('/outlier')}>
             <span className="nav-icon">📈</span>
             <span>Outlier</span>
           </button>

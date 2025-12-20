@@ -10,6 +10,7 @@ import KeywordResearch from './components/KeywordResearch'
 import HashtagGenerator from './components/HashtagGenerator'
 import Analytics from './components/Analytics'
 import StreakTracker from './components/StreakTracker'
+import OutlierDetection from './components/OutlierDetection'
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -34,6 +35,7 @@ function App() {
         <Route path="/content" element={<PrivateRoute><ContentGenerator /></PrivateRoute>} />
         <Route path="/keywords" element={<PrivateRoute><KeywordResearch /></PrivateRoute>} />
         <Route path="/hashtags" element={<PrivateRoute><HashtagGenerator /></PrivateRoute>} />
+        <Route path="/outlier" element={<PrivateRoute><OutlierDetection /></PrivateRoute>} />
         <Route path="/analytics" element={<PrivateRoute><Analytics /></PrivateRoute>} />
         <Route path="/streak" element={<PrivateRoute><StreakTracker /></PrivateRoute>} />
       </Routes>

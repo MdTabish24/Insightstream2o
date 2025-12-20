@@ -7,7 +7,8 @@ from core.exceptions import AIServiceUnavailable, RateLimitExceeded
 
 class GeminiClient:
     def __init__(self):
-        self.model_name = 'gemini-2.0-flash'
+        # Use stable model instead of experimental
+        self.model_name = 'gemini-1.5-flash'
     
     def _get_model(self):
         api_key = api_key_manager.get_active_key('gemini')
@@ -16,18 +17,22 @@ class GeminiClient:
         genai.configure(api_key=api_key)
         return genai.GenerativeModel(self.model_name)
     
-    @retry_with_backoff(max_retries=3, base_delay=1.0)
-    def generate_content(self, prompt: str) -> str:
+    def generate_content(self, prompt: str, retry_count: int = 0) -> str:
+        max_retries = len(settings.GEMINI_API_KEYS) if settings.GEMINI_API_KEYS else 1
+        
         try:
             model = self._get_model()
             response = model.generate_content(prompt)
             return response.text
         except Exception as e:
-            if 'quota' in str(e).lower() or 'rate' in str(e).lower():
-                api_key_manager.rotate_key('gemini')
-                if api_key_manager.is_exhausted('gemini'):
+            error_msg = str(e).lower()
+            # Check if it's a rate limit or quota error
+            if ('quota' in error_msg or 'rate' in error_msg or '429' in error_msg or 'resource_exhausted' in error_msg):
+                if retry_count < max_retries - 1:
+                    api_key_manager.rotate_key('gemini')
+                    return self.generate_content(prompt, retry_count + 1)
+                else:
                     raise RateLimitExceeded('All Gemini API keys exhausted')
-                return self.generate_content(prompt)
             raise AIServiceUnavailable(f'Gemini error: {str(e)}')
     
     def generate_video_concepts(self, topic: str) -> dict:

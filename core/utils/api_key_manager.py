@@ -32,6 +32,17 @@ class APIKeyManager:
     
     def is_exhausted(self, service: str) -> bool:
         keys = self.keys.get(service, [])
-        return all(cache.get(f'rate_limited_{service}_{i}') for i in range(len(keys)))
+        if not keys:
+            return True
+        # Check if all keys are rate limited
+        rate_limited_count = sum(1 for i in range(len(keys)) if cache.get(f'rate_limited_{service}_{i}'))
+        return rate_limited_count >= len(keys)
+    
+    def reset_rate_limits(self, service: str) -> None:
+        """Reset rate limits for a service (for testing/debugging)"""
+        keys = self.keys.get(service, [])
+        for i in range(len(keys)):
+            cache.delete(f'rate_limited_{service}_{i}')
+        self.current_index[service] = 0
 
 api_key_manager = APIKeyManager()

@@ -28,7 +28,7 @@ function Dashboard() {
     {
       title: 'Outlier Detection',
       image: '/outlier.png',
-      path: '/analytics'
+      path: '/outlier'
     },
     {
       title: 'Trending Hashtags',
@@ -75,19 +75,19 @@ function Dashboard() {
             <span className="nav-icon">🎨</span>
             <span>Thumbnail Generator</span>
           </button>
-          <button className="nav-item" onClick={() => navigate('/analytics')}>
+          <button className="nav-item" onClick={() => navigate('/search')}>
             <span className="nav-icon">🔍</span>
             <span>Thumbnail Search</span>
           </button>
-          <button className="nav-item" onClick={() => navigate('/keywords')}>
+          <button className="nav-item" onClick={() => navigate('/hashtags')}>
             <span className="nav-icon">🔑</span>
-            <span>Keywords</span>
+            <span>Hashtags</span>
           </button>
           <button className="nav-item" onClick={() => navigate('/keywords')}>
             <span className="nav-icon">📊</span>
             <span>Keyword Research</span>
           </button>
-          <button className="nav-item" onClick={() => navigate('/analytics')}>
+          <button className="nav-item" onClick={() => navigate('/outlier')}>
             <span className="nav-icon">📈</span>
             <span>Outlier</span>
           </button>

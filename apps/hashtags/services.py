@@ -14,24 +14,38 @@ class HashtagService:
     
     def generate_hashtags(self, topic: str) -> dict:
         """Generate hashtags combining real YouTube data and AI suggestions."""
+        real_hashtags = []
+        ai_hashtags = []
+        
         try:
             # Extract real hashtags from trending videos
             real_hashtags = self._extract_from_trending(topic)
-            
+        except Exception as e:
+            logger.warning(f'Failed to extract real hashtags: {str(e)}')
+        
+        try:
             # Generate AI hashtags
             ai_hashtags = self._generate_ai_hashtags(topic)
-            
-            # Combine and deduplicate
-            combined = self._combine_hashtags(real_hashtags, ai_hashtags)
-            
-            return {
-                'real_hashtags': real_hashtags[:10],
-                'ai_hashtags': ai_hashtags[:10],
-                'combined': combined[:15]
-            }
         except Exception as e:
-            logger.error(f'Hashtag generation error: {str(e)}')
+            logger.warning(f'Failed to generate AI hashtags: {str(e)}')
+        
+        # If both failed, use fallback
+        if not real_hashtags and not ai_hashtags:
+            logger.error(f'Hashtag generation error: All methods failed')
             return self._fallback_hashtags(topic)
+        
+        # Combine and deduplicate
+        combined = self._combine_hashtags(real_hashtags, ai_hashtags)
+        
+        # Ensure we always have some hashtags
+        if not combined:
+            return self._fallback_hashtags(topic)
+        
+        return {
+            'real_hashtags': real_hashtags[:10] if real_hashtags else [],
+            'ai_hashtags': ai_hashtags[:10] if ai_hashtags else [],
+            'combined': combined[:15]
+        }
     
     def _extract_from_trending(self, topic: str) -> list:
         """Extract hashtags from trending YouTube videos."""
@@ -87,9 +101,10 @@ class HashtagService:
                 })
             
             return result
-        except AIServiceUnavailable as e:
+        except Exception as e:
             logger.warning(f'AI service error in hashtag generation: {str(e)}')
-            return []
+            # Return basic AI hashtags as fallback
+            return self._get_basic_ai_hashtags(topic)
     
     def _combine_hashtags(self, real: list, ai: list) -> list:
         """Combine real and AI hashtags, removing duplicates."""
@@ -112,16 +127,26 @@ class HashtagService:
         
         return combined
     
-    def _fallback_hashtags(self, topic: str) -> dict:
-        """Fallback hashtags if all services fail."""
+    def _get_basic_ai_hashtags(self, topic: str) -> list:
+        """Generate basic AI hashtags when Gemini fails."""
         topic_clean = topic.replace(' ', '').lower()
-        fallback = [
+        words = topic.lower().split()
+        
+        hashtags = [
             {'hashtag': f'#{topic_clean}', 'usage_count': 1000, 'engagement': 'high'},
+            {'hashtag': f'#{words[0]}' if words else '#topic', 'usage_count': 900, 'engagement': 'high'},
             {'hashtag': '#youtube', 'usage_count': 5000, 'engagement': 'high'},
             {'hashtag': '#viral', 'usage_count': 3000, 'engagement': 'high'},
             {'hashtag': '#trending', 'usage_count': 2500, 'engagement': 'medium'},
             {'hashtag': f'#{topic_clean}tips', 'usage_count': 800, 'engagement': 'medium'},
+            {'hashtag': f'#{topic_clean}tutorial', 'usage_count': 700, 'engagement': 'medium'},
+            {'hashtag': '#contentcreator', 'usage_count': 2000, 'engagement': 'medium'},
         ]
+        return hashtags
+    
+    def _fallback_hashtags(self, topic: str) -> dict:
+        """Fallback hashtags if all services fail."""
+        fallback = self._get_basic_ai_hashtags(topic)
         
         return {
             'real_hashtags': fallback[:3],

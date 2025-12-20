@@ -49,13 +49,15 @@ class ImageKitClient:
             
             logger.info(f"[ImageKit] Uploading to ImageKit with filename: {file_name}.png")
             client = self._get_client()
+            from imagekitio.models.UploadFileRequestOptions import UploadFileRequestOptions
+            options = UploadFileRequestOptions(
+                folder="/thumbnails/",
+                use_unique_file_name=True,
+            )
             result = client.upload_file(
                 file=data_uri,
                 file_name=f"{file_name}.png",
-                options={
-                    "folder": "/thumbnails/",
-                    "use_unique_file_name": True,
-                }
+                options=options
             )
             logger.info(f"[ImageKit] Upload result type: {type(result)}, has url attr: {hasattr(result, 'url')}")
             
@@ -96,13 +98,15 @@ class ImageKitClient:
             data_uri = f"data:image/png;base64,{image_base64}"
             
             client = self._get_client()
+            from imagekitio.models.UploadFileRequestOptions import UploadFileRequestOptions
+            options = UploadFileRequestOptions(
+                folder="/thumbnails/",
+                use_unique_file_name=True,
+            )
             result = client.upload_file(
                 file=data_uri,
                 file_name=f"{file_name}.png",
-                options={
-                    "folder": "/thumbnails/",
-                    "use_unique_file_name": True,
-                }
+                options=options
             )
             
             if hasattr(result, 'url') and result.url:
